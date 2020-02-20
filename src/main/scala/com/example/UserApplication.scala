@@ -2,15 +2,15 @@ package com.example
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class UserApplication {
+class UserApplication extends WithMiddleware {
 
   implicit val executionContext: ExecutionContext = ExecutionContext.global
 
-  implicit val middlewares: List[Middleware] =
+  override val middlewares: List[Middleware] =
     List(LoggerMiddleware1, LoggerMiddleware2)
 
-  def create(name: String): Future[Int] = Middleware.withMiddleware { () =>
-    println("Inside Application")
+  def create(name: String): Future[Int] = withMiddleware { () =>
+    println(s"Inside Application: $name")
     Future(1)
   }
 }

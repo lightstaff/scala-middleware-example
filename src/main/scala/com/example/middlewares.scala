@@ -7,27 +7,6 @@ trait Middleware {
   def run[A](cb: () => Future[A])()(implicit ec: ExecutionContext): Future[A]
 }
 
-object Middleware {
-
-  @scala.annotation.tailrec
-  private def withMiddleware[A](
-      middlewares: List[Middleware],
-      cb: () => Future[A]
-  )(implicit ec: ExecutionContext): Future[A] =
-    middlewares match {
-      case Nil =>
-        cb()
-
-      case head :: tail =>
-        withMiddleware(tail, head.run(cb))
-    }
-
-  def withMiddleware[A](
-      cb: () => Future[A]
-  )(implicit middlewares: List[Middleware], ec: ExecutionContext): Future[A] =
-    withMiddleware(middlewares, cb)
-}
-
 object LoggerMiddleware1 extends Middleware {
 
   def run[A](
@@ -36,7 +15,7 @@ object LoggerMiddleware1 extends Middleware {
     println("Logger1 Start")
 
     cb().map { v =>
-      println("Logger1 End")
+      println(s"Logger1 End: $v")
       v
     }
   }
@@ -50,8 +29,7 @@ object LoggerMiddleware2 extends Middleware {
     println("Logger2 Start")
 
     cb().map { v =>
-      println("Logger2 End")
-
+      println(s"Logger2 End: $v")
       v
     }
   }
