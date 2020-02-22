@@ -1,25 +1,22 @@
 package com.example
 
-import scala.concurrent.{ExecutionContext, Future}
-
-trait WithMiddleware {
+trait WithMiddleware[F[_]] {
 
   @scala.annotation.tailrec
   private def recursiveRun[A](
-      runners: List[Middleware],
-      cb: () => Future[A]
-  )(implicit ec: ExecutionContext): Future[A] =
-    runners match {
+      ms: List[Middleware[F]],
+      runner: Runner[F, A]
+  ): F[A] =
+    ms match {
       case Nil =>
-        cb()
+        runner.run()
 
       case head :: tail =>
-        recursiveRun(tail, head.run(cb))
+        recursiveRun(tail, head.runner(runner))
     }
 
-  def middlewares: List[Middleware]
+  def middlewares: List[Middleware[F]]
 
-  protected def withMiddleware[A](cb: () => Future[A])(
-      implicit ec: ExecutionContext
-  ): Future[A] = recursiveRun(middlewares, cb)
+  protected def withMiddleware[A](cb: () => F[A]): F[A] =
+    recursiveRun(middlewares, Runner(cb))
 }

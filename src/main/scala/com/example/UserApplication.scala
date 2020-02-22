@@ -1,16 +1,21 @@
 package com.example
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
-class UserApplication extends WithMiddleware {
+import cats.effect.{ContextShift, IO}
+
+class UserApplication extends WithMiddleware[IO] {
 
   implicit val executionContext: ExecutionContext = ExecutionContext.global
 
-  override val middlewares: List[Middleware] =
-    List(LoggerMiddleware1, LoggerMiddleware2)
+  implicit val contextShift: ContextShift[IO] =
+    IO.contextShift(executionContext)
 
-  def create(name: String): Future[Int] = withMiddleware { () =>
+  override val middlewares: List[Middleware[IO]] =
+    List(LoggerMiddlewareIO_1, LoggerMiddlewareIO_2)
+
+  def create(name: String): IO[Int] = withMiddleware { () =>
     println(s"Inside Application: $name")
-    Future(1)
+    IO.pure(1)
   }
 }

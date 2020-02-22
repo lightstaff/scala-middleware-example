@@ -1,35 +1,36 @@
 package com.example
 
-import scala.concurrent.{ExecutionContext, Future}
+import cats.effect.IO
+import cats.implicits._
 
-trait Middleware {
+final case class Runner[F[_], A](run: () => F[A])
 
-  def run[A](cb: () => Future[A])()(implicit ec: ExecutionContext): Future[A]
+abstract class Middleware[F[_]] {
+
+  def runner[A](runner: Runner[F, A]): Runner[F, A]
 }
 
-object LoggerMiddleware1 extends Middleware {
+object LoggerMiddlewareIO_1 extends Middleware[IO] {
 
-  def run[A](
-      cb: () => Future[A]
-  )()(implicit ec: ExecutionContext): Future[A] = {
+  override def runner[A](runner: Runner[IO, A]): Runner[IO, A] = Runner {
     println("Logger1 Start")
 
-    cb().map { v =>
-      println(s"Logger1 End: $v")
+    runner.run.map { v =>
+      println("Logger1 End")
+
       v
     }
   }
 }
 
-object LoggerMiddleware2 extends Middleware {
+object LoggerMiddlewareIO_2 extends Middleware[IO] {
 
-  def run[A](
-      cb: () => Future[A]
-  )()(implicit ec: ExecutionContext): Future[A] = {
+  override def runner[A](runner: Runner[IO, A]): Runner[IO, A] = Runner {
     println("Logger2 Start")
 
-    cb().map { v =>
-      println(s"Logger2 End: $v")
+    runner.run.map { v =>
+      println("Logger2 End")
+
       v
     }
   }
